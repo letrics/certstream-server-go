@@ -16,6 +16,7 @@ import (
 	"github.com/d-Rickyy-b/certstream-server-go/internal/config"
 	"github.com/d-Rickyy-b/certstream-server-go/internal/models"
 	"github.com/d-Rickyy-b/certstream-server-go/internal/web"
+	"github.com/google/trillian/client/backoff"
 
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/certificate-transparency-go/client"
@@ -105,113 +106,105 @@ func (w *Watcher) updateLogs() {
 		return
 	}
 
-	w.addNewlyAvailableLogs(logList)
-	if *config.AppConfig.General.DropOldLogs {
-		w.dropRemovedLogs(logList)
-	}
-}
-
-// addNewlyAvailableLogs checks the transparency log list for new Log servers and adds workers for those to the watcher.
-func (w *Watcher) addNewlyAvailableLogs(logList loglist3.LogList) {
 	log.Println("Checking for new ct logs...")
 
+	// Track all URLs that should be monitored after reconciliation
+	monitoredUrls := make(map[string]struct{})
 	newCTs := 0
 
-	// Check the ct log list for new, unwatched logs
-	// For each CT log, create a worker and start downloading certs
 	for _, operator := range logList.Operators {
-		// Iterate over each log of the operator
+		// Classic logs
 		for _, transparencyLog := range operator.Logs {
-			newURL := normalizeCtlogURL(transparencyLog.URL)
+			url := normalizeCtlogURL(transparencyLog.URL)
+			desc := transparencyLog.Description
+			normUrl := normalizeCtlogURL(url)
 
 			if transparencyLog.State.LogStatus() == loglist3.RetiredLogStatus {
-				log.Printf("Skipping retired CT log: %s\n", newURL)
+				log.Printf("Skipping retired CT log: %s\n", normUrl)
 				continue
 			}
 
-			// Check if the log is already being watched
-			alreadyWatched := false
-			for _, ctWorker := range w.workers {
-				workerURL := normalizeCtlogURL(ctWorker.ctURL)
-				if workerURL == newURL {
-					alreadyWatched = true
-					break
-				}
+			monitoredUrls[normUrl] = struct{}{}
+			if w.addLogIfNew(operator.Name, desc, url, false) {
+				newCTs++
+			}
+		}
+
+		// Tiled logs
+		for _, transparencyLog := range operator.TiledLogs {
+			url := transparencyLog.MonitoringURL
+			desc := transparencyLog.Description
+			normUrl := normalizeCtlogURL(url)
+
+			if transparencyLog.State.LogStatus() == loglist3.RetiredLogStatus {
+				log.Printf("Skipping retired CT log: %s\n", normUrl)
+				continue
 			}
 
-			// If the log is not being watched, create a new worker
-			if !alreadyWatched {
-				w.wg.Add(1)
+			monitoredUrls[normUrl] = struct{}{}
+			if w.addLogIfNew(operator.Name, desc, url, true) {
 				newCTs++
-
-				lastCTIndex := metrics.GetCTIndex(transparencyLog.URL)
-				ctWorker := worker{
-					name:         transparencyLog.Description,
-					operatorName: operator.Name,
-					ctURL:        transparencyLog.URL,
-					entryChan:    w.certChan,
-					ctIndex:      lastCTIndex,
-				}
-				w.workers = append(w.workers, &ctWorker)
-				metrics.Init(operator.Name, transparencyLog.URL)
-
-				// Start a goroutine for each worker
-				go func() {
-					defer w.wg.Done()
-					ctWorker.startDownloadingCerts(w.context)
-				}()
 			}
 		}
 	}
 
 	log.Printf("New ct logs found: %d\n", newCTs)
+
+	// Also ensure additional logs are kept and started if missing
+	for _, additional := range config.AppConfig.General.AdditionalLogs {
+		norm := normalizeCtlogURL(additional.URL)
+		monitoredUrls[norm] = struct{}{}
+		_ = w.addLogIfNew(additional.Operator, additional.Description, additional.URL, false)
+	}
+
+	// Optionally stop workers for logs not in the monitoredUrls set
+	if *config.AppConfig.General.DropOldLogs {
+		removed := 0
+		for _, ctWorker := range w.workers {
+			if _, ok := monitoredUrls[normalizeCtlogURL(ctWorker.ctURL)]; !ok {
+				log.Printf("Stopping worker. CT URL not found in LogList: '%s'\n", ctWorker.ctURL)
+				ctWorker.stop()
+				removed++
+			}
+		}
+		log.Printf("Removed ct logs: %d\n", removed)
+	}
+
 	log.Printf("Currently monitored ct logs: %d\n", len(w.workers))
 }
 
-// dropRemovedLogs checks if any of the currently monitored logs are no longer in the log list.
-// If they are not, the CT Logs are probably no longer relevant and the corresponding workers will be stopped.
-func (w *Watcher) dropRemovedLogs(logList loglist3.LogList) {
-	removedCTs := 0
+// addLogIfNew checks if a log is already watched; if not, it creates and starts a worker.
+// Returns true if a new worker was added.
+func (w *Watcher) addLogIfNew(operatorName string, description string, url string, isTiled bool) bool {
+	newURL := normalizeCtlogURL(url)
 
-	// Iterate over all workers and check if they are still in the logList
-	// If they are not, the CT Logs are probably no longer relevant.
-	// We should stop the worker if that didn't already happen.
 	for _, ctWorker := range w.workers {
 		workerURL := normalizeCtlogURL(ctWorker.ctURL)
-
-		onLogList := false
-		for _, operator := range logList.Operators {
-			// Iterate over each log of the operator
-			for _, transparencyLog := range operator.Logs {
-				// Check if the log is already being watched
-
-				logListURL := normalizeCtlogURL(transparencyLog.URL)
-				if workerURL == logListURL {
-					onLogList = true
-					break
-				}
-			}
-		}
-
-		// Make sure to not drop logs that are defined locally in the additional logs list
-		for _, additionalLogConfig := range config.AppConfig.General.AdditionalLogs {
-			additionalLogListURL := normalizeCtlogURL(additionalLogConfig.URL)
-			if workerURL == additionalLogListURL {
-				onLogList = true
-				break
-			}
-		}
-
-		// If the log is not in the loglist, stop the worker
-		if !onLogList {
-			log.Printf("Stopping worker. CT URL not found in LogList: '%s'\n", ctWorker.ctURL)
-			removedCTs++
-			ctWorker.stop()
+		if workerURL == newURL {
+			return false
 		}
 	}
 
-	log.Printf("Removed ct logs: %d\n", removedCTs)
-	log.Printf("Currently monitored ct logs: %d\n", len(w.workers))
+	w.wg.Add(1)
+
+	lastCTIndex := metrics.GetCTIndex(url)
+	ctWorker := worker{
+		name:         description,
+		operatorName: operatorName,
+		ctURL:        url,
+		entryChan:    w.certChan,
+		ctIndex:      lastCTIndex,
+		isTiled:      isTiled,
+	}
+	w.workers = append(w.workers, &ctWorker)
+	metrics.Init(operatorName, url)
+
+	go func() {
+		defer w.wg.Done()
+		ctWorker.startDownloadingCerts(w.context)
+	}()
+
+	return true
 }
 
 // Stop stops the watcher.
@@ -272,6 +265,7 @@ type worker struct {
 	mu           sync.Mutex
 	running      bool
 	cancel       context.CancelFunc
+	isTiled      bool
 }
 
 // startDownloadingCerts starts downloading certificates from the CT log. This method is blocking.
@@ -301,7 +295,14 @@ func (w *worker) startDownloadingCerts(ctx context.Context) {
 
 	for {
 		log.Printf("Starting worker for CT log: %s\n", w.ctURL)
-		workerErr := w.runWorker(ctx)
+
+		var workerErr error
+		if w.isTiled {
+			workerErr = w.runTiledWorker(ctx)
+		} else {
+			workerErr = w.runStandardWorker(ctx)
+		}
+
 		if workerErr != nil {
 			if errors.Is(workerErr, errFetchingSTHFailed) {
 				// TODO this could happen due to a 429 error. We should retry the request
@@ -339,8 +340,8 @@ func (w *worker) stop() {
 	w.cancel()
 }
 
-// runWorker runs a single worker for a single CT log. This method is blocking.
-func (w *worker) runWorker(ctx context.Context) error {
+// runStandardWorker runs the worker for a single standard CT log. This method is blocking.
+func (w *worker) runStandardWorker(ctx context.Context) error {
 	hc := http.Client{Timeout: 30 * time.Second}
 	jsonClient, e := client.New(w.ctURL, &hc, jsonclient.Options{UserAgent: userAgent})
 	if e != nil {
@@ -353,7 +354,7 @@ func (w *worker) runWorker(ctx context.Context) error {
 	if !validSavedCTIndexExists {
 		sth, getSTHerr := jsonClient.GetSTH(ctx)
 		if getSTHerr != nil {
-		// TODO this can happen due to a 429 error. We should retry the request
+			// TODO this can happen due to a 429 error. We should retry the request
 			log.Printf("Could not get STH for '%s': %s\n", w.ctURL, getSTHerr)
 			return errFetchingSTHFailed
 		}
@@ -381,6 +382,132 @@ func (w *worker) runWorker(ctx context.Context) error {
 	}
 
 	log.Printf("Exiting worker %s without error!\n", w.ctURL)
+
+	return nil
+}
+
+// runTiledWorker runs the worker for a single tiled CT log. This method is blocking.
+func (w *worker) runTiledWorker(ctx context.Context) error {
+	hc := &http.Client{Timeout: 30 * time.Second}
+
+	// If recovery is enabled and the CT index is set, we start at the saved index. Otherwise we start at the latest checkpoint.
+	validSavedCTIndexExists := config.AppConfig.General.Recovery.Enabled && w.ctIndex >= 0
+	if !validSavedCTIndexExists {
+		checkpoint, err := FetchCheckpoint(ctx, hc, w.ctURL)
+		if err != nil {
+			log.Printf("Could not get checkpoint for '%s': %s\n", w.ctURL, err)
+			return errFetchingSTHFailed
+		}
+		// Start at the latest checkpoint to skip all the past certificates
+		w.ctIndex = int64(checkpoint.Size)
+	}
+
+	// Initialize backoff for polling
+	pollBackoff := &backoff.Backoff{
+		Min:    1 * time.Second,
+		Max:    30 * time.Second,
+		Factor: 2,
+		Jitter: true,
+	}
+
+	// Continuous monitoring loop
+	for {
+		hadNewEntries, err := w.processTiledLogUpdates(ctx, hc)
+		if err != nil {
+			log.Printf("Error processing tiled log updates for '%s': %s\n", w.ctURL, err)
+			return err
+		}
+
+		// Reset backoff if we found new entries
+		if hadNewEntries {
+			pollBackoff.Reset()
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(pollBackoff.Duration()):
+			// Continue to the next iteration
+		}
+	}
+}
+
+// processTiledLogUpdates checks for new entries in the tiled log and processes them
+func (w *worker) processTiledLogUpdates(ctx context.Context, hc *http.Client) (bool, error) {
+	// Fetch current checkpoint
+	checkpoint, err := FetchCheckpoint(ctx, hc, w.ctURL)
+	if err != nil {
+		return false, fmt.Errorf("fetching checkpoint: %w", err)
+	}
+
+	currentTreeSize := int64(checkpoint.Size)
+	if currentTreeSize <= w.ctIndex {
+		// No new entries
+		return false, nil
+	}
+
+	log.Printf("Processing tiled log updates for '%s': from index %d to %d\n", w.ctURL, w.ctIndex, currentTreeSize)
+
+	// Process entries from current index to new tree size
+	startTile := uint64(w.ctIndex) / TileSize
+	endTile := CalculateCompleteTiles(uint64(currentTreeSize))
+
+	// Process complete tiles
+	for tileIndex := startTile; tileIndex < endTile; tileIndex++ {
+		if err := w.processTile(ctx, hc, tileIndex, false); err != nil {
+			return false, fmt.Errorf("processing tile %d: %w", tileIndex, err)
+		}
+	}
+
+	// Process partial tile if it has enough entries to be meaningful
+	partialTileSize := CalculatePartialTileSize(uint64(currentTreeSize))
+	if partialTileSize > 0 && endTile*TileSize < uint64(currentTreeSize) {
+		// Only process partial tiles if they have at least a few entries to avoid too frequent updates
+		if partialTileSize >= 10 || (currentTreeSize-w.ctIndex) < 100 {
+			if err := w.processTile(ctx, hc, endTile, true); err != nil {
+				log.Printf("Warning: error processing partial tile %d: %s\n", endTile, err)
+				// Don't return error for partial tiles as they might be incomplete
+			}
+		}
+	}
+
+	return true, nil
+}
+
+// processTile processes a single tile from the tiled log
+func (w *worker) processTile(ctx context.Context, hc *http.Client, tileIndex uint64, isPartial bool) error {
+	leaves, err := FetchTile(ctx, hc, w.ctURL, tileIndex)
+	if err != nil {
+		return fmt.Errorf("fetching tile: %w", err)
+	}
+
+	// Calculate the starting index for entries in this tile
+	baseIndex := tileIndex * TileSize
+
+	for i, leaf := range leaves {
+		entryIndex := baseIndex + uint64(i)
+
+		// Skip entries we've already processed
+		if int64(entryIndex) <= w.ctIndex {
+			continue
+		}
+
+		// Convert TileLeaf to RawLogEntry for compatibility with existing parsing
+		rawEntry := ConvertTileLeafToRawLogEntry(leaf, entryIndex)
+
+		// Process the entry using existing callbacks
+		if leaf.EntryType == 0 { // x509_entry
+			w.foundCertCallback(rawEntry)
+		} else if leaf.EntryType == 1 { // precert_entry
+			w.foundPrecertCallback(rawEntry)
+		}
+
+		// Update the index
+		w.ctIndex = int64(entryIndex)
+	}
+
+	log.Printf("Processed tile %d for '%s' (%s): %d entries\n", tileIndex, w.ctURL,
+		map[bool]string{true: "partial", false: "complete"}[isPartial], len(leaves))
 
 	return nil
 }
