@@ -4,13 +4,13 @@ package certstream
 // directly in Go code without needing WebSocket connections.
 
 import (
+	"github.com/letrics/certstream-server-go/pkg/config"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/letrics/certstream-server-go/internal/certificatetransparency"
-	"github.com/letrics/certstream-server-go/internal/config"
 	"github.com/letrics/certstream-server-go/internal/models"
 )
 
@@ -19,7 +19,7 @@ type CertStream struct {
 	watcher  *certificatetransparency.Watcher
 	certChan chan models.Entry
 	config   config.Config
-    doneChan chan struct{}
+	doneChan chan struct{}
 }
 
 // Entry re-exports the internal Entry type for public use
@@ -49,15 +49,15 @@ func NewFromConfigFile(configPath string) (*CertStream, error) {
 // New creates a certstream library instance with default configuration
 func New() *CertStream {
 	conf := config.Config{}
-	
+
 	// Set reasonable defaults
 	conf.General.BufferSizes.CTLog = 1000
 	conf.General.BufferSizes.BroadcastManager = 5000
 	conf.General.Recovery.Enabled = false
-	
+
 	dropOldLogs := true
 	conf.General.DropOldLogs = &dropOldLogs
-	
+
 	return NewFromConfig(conf)
 }
 
@@ -83,17 +83,17 @@ func (cs *CertStream) Start() <-chan Entry {
 		cs.Stop()
 	}()
 
-    // Apply effective config globally so the watcher uses these values
-    config.AppConfig = cs.config
+	// Apply effective config globally so the watcher uses these values
+	config.AppConfig = cs.config
 
-    // Create and start watcher
-    cs.watcher = certificatetransparency.NewWatcher(cs.certChan)
+	// Create and start watcher
+	cs.watcher = certificatetransparency.NewWatcher(cs.certChan)
 
-    // Start watcher in background and signal completion
-    go func() {
-        cs.watcher.Start()
-        close(cs.doneChan)
-    }()
+	// Start watcher in background and signal completion
+	go func() {
+		cs.watcher.Start()
+		close(cs.doneChan)
+	}()
 
 	return cs.certChan
 }
@@ -108,7 +108,7 @@ func (cs *CertStream) Stop() {
 
 // Wait blocks until the certstream is stopped
 func (cs *CertStream) Wait() {
-    <-cs.doneChan
+	<-cs.doneChan
 }
 
 // EnableRecovery enables the recovery feature which allows resuming from the last processed certificate
@@ -122,4 +122,3 @@ func (cs *CertStream) SetBufferSizes(ctLogBuffer, broadcastBuffer int) {
 	cs.config.General.BufferSizes.CTLog = ctLogBuffer
 	cs.config.General.BufferSizes.BroadcastManager = broadcastBuffer
 }
-

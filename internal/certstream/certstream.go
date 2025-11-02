@@ -5,13 +5,13 @@ package certstream
 // It also handles signals for graceful shutdown of the server.
 
 import (
+	"github.com/letrics/certstream-server-go/pkg/config"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/letrics/certstream-server-go/internal/certificatetransparency"
-	"github.com/letrics/certstream-server-go/internal/config"
 	"github.com/letrics/certstream-server-go/internal/metrics"
 	"github.com/letrics/certstream-server-go/internal/web"
 )

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/letrics/certstream-server-go/pkg/config"
 	"io"
 	"log"
 	"net/http"
@@ -13,7 +14,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/letrics/certstream-server-go/internal/config"
 	"github.com/letrics/certstream-server-go/internal/models"
 	"github.com/letrics/certstream-server-go/internal/web"
 

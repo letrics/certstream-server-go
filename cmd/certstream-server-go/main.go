@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/letrics/certstream-server-go/pkg/config"
 	"log"
 
 	"github.com/letrics/certstream-server-go/internal/certstream"
-	"github.com/letrics/certstream-server-go/internal/config"
 )
 
 // main is the entry point for the application.

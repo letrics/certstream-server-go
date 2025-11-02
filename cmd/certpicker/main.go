@@ -5,18 +5,17 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/letrics/certstream-server-go/pkg/config"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/letrics/certstream-server-go/internal/certificatetransparency"
-	"github.com/letrics/certstream-server-go/internal/config"
-
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/certificate-transparency-go/client"
 	"github.com/google/certificate-transparency-go/jsonclient"
 	"github.com/google/certificate-transparency-go/scanner"
+	"github.com/letrics/certstream-server-go/internal/certificatetransparency"
 )
 
 var userAgent = fmt.Sprintf("Certstream v%s (github.com/letrics/certstream-server-go)", config.Version)

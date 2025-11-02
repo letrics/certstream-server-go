@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/letrics/certstream-server-go/pkg/config"
 	"io"
 	"log"
 	"net"
@@ -14,7 +15,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/letrics/certstream-server-go/internal/config"
 	"github.com/letrics/certstream-server-go/internal/models"
 
 	"github.com/gorilla/websocket"
