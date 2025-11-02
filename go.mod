@@ -1,4 +1,4 @@
-module github.com/d-Rickyy-b/certstream-server-go
+module github.com/letrics/certstream-server-go
 
 go 1.24.0
 
