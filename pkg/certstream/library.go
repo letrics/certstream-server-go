@@ -55,6 +55,12 @@ func New() *CertStream {
 	conf.General.BufferSizes.BroadcastManager = 5000
 	conf.General.Recovery.Enabled = false
 
+	// Set default CT log fetcher options
+	conf.General.CTLogFetcher.BatchSize = 100
+	conf.General.CTLogFetcher.ParallelFetch = 1
+	conf.General.CTLogFetcher.NumWorkers = 1
+	conf.General.CTLogFetcher.HTTPTimeout = 30
+
 	dropOldLogs := true
 	conf.General.DropOldLogs = &dropOldLogs
 
@@ -121,4 +127,19 @@ func (cs *CertStream) EnableRecovery(indexFilePath string) {
 func (cs *CertStream) SetBufferSizes(ctLogBuffer, broadcastBuffer int) {
 	cs.config.General.BufferSizes.CTLog = ctLogBuffer
 	cs.config.General.BufferSizes.BroadcastManager = broadcastBuffer
+}
+
+// SetCTLogFetcherOptions configures the CT log fetcher performance parameters.
+// These control how fast certificates are downloaded from CT logs.
+//
+// Parameters:
+//   - batchSize: Number of certificates to fetch per request (recommended: 500-1000 for high throughput)
+//   - parallelFetch: Number of parallel fetches per CT log (recommended: 4-8 for high throughput)
+//   - numWorkers: Number of workers processing entries per CT log (recommended: 2-4 for high throughput)
+//   - httpTimeout: HTTP timeout in seconds for CT log requests (increase if using large batch sizes)
+func (cs *CertStream) SetCTLogFetcherOptions(batchSize, parallelFetch, numWorkers, httpTimeout int) {
+	cs.config.General.CTLogFetcher.BatchSize = batchSize
+	cs.config.General.CTLogFetcher.ParallelFetch = parallelFetch
+	cs.config.General.CTLogFetcher.NumWorkers = numWorkers
+	cs.config.General.CTLogFetcher.HTTPTimeout = httpTimeout
 }

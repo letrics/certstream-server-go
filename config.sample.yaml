@@ -42,6 +42,25 @@ general:
     # Combined buffer for the broadcast manager
     broadcastmanager: 10000
 
+  # CT Log Fetcher options - these control how fast certificates are downloaded from CT logs
+  # Increase these values to significantly boost throughput. Monitor your network and CPU usage.
+  ctlog_fetcher:
+    # Number of certificates to fetch per request from each CT log (default: 100)
+    # Higher values = more throughput but more memory usage
+    # Recommended for high throughput: 500-1000
+    batch_size: 100
+    # Number of parallel fetches per CT log (default: 1)
+    # Higher values = faster downloads but more network connections
+    # Recommended for high throughput: 4-8
+    parallel_fetch: 1
+    # Number of workers processing entries per CT log (default: 1)
+    # Higher values = faster processing but more CPU usage
+    # Recommended for high throughput: 2-4
+    num_workers: 1
+    # HTTP timeout in seconds for CT log requests (default: 30)
+    # Increase if using large batch_size values
+    http_timeout: 30
+
   # Google regularly updates the log list. If this option is set to true, the server will remove all logs no longer listed in the Google log list.
   # This option defaults to true. See https://github.com/letrics/certstream-server-go/issues/51
   drop_old_logs: true
