@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/d-Rickyy-b/certstream-server-go/internal/certstream"
-	"github.com/d-Rickyy-b/certstream-server-go/internal/config"
+	"github.com/letrics/certstream-server-go/internal/certstream"
+	"github.com/letrics/certstream-server-go/internal/config"
 )
 
 // main is the entry point for the application.

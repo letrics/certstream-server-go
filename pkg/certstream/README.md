@@ -14,7 +14,7 @@ Use certstream-server-go as a library in your own Go applications. This allows y
 ## Installation
 
 ```bash
-go get github.com/d-Rickyy-b/certstream-server-go
+go get github.com/letrics/certstream-server-go
 ```
 
 ## Quick Start
@@ -24,7 +24,7 @@ package main
 
 import (
     "log"
-    "github.com/d-Rickyy-b/certstream-server-go/pkg/certstream"
+    "github.com/letrics/certstream-server-go/pkg/certstream"
 )
 
 func main() {

@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/d-Rickyy-b/certstream-server-go/pkg/certstream"
+	"github.com/letrics/certstream-server-go/pkg/certstream"
 )
 
 // ExampleNew demonstrates basic usage with default configuration

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/d-Rickyy-b/certstream-server-go/internal/certificatetransparency"
-	"github.com/d-Rickyy-b/certstream-server-go/internal/config"
+	"github.com/letrics/certstream-server-go/internal/certificatetransparency"
+	"github.com/letrics/certstream-server-go/internal/config"
 
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/certificate-transparency-go/client"
@@ -19,7 +19,7 @@ import (
 	"github.com/google/certificate-transparency-go/scanner"
 )
 
-var userAgent = fmt.Sprintf("Certstream v%s (github.com/d-Rickyy-b/certstream-server-go)", config.Version)
+var userAgent = fmt.Sprintf("Certstream v%s (github.com/letrics/certstream-server-go)", config.Version)
 
 func main() {
 	ctLogFlag := flag.String("log", "", "URL of the CT log - e.g. ct.googleapis.com/logs/eu1/xenon2025h2")

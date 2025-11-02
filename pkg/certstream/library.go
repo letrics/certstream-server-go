@@ -9,9 +9,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/d-Rickyy-b/certstream-server-go/internal/certificatetransparency"
-	"github.com/d-Rickyy-b/certstream-server-go/internal/config"
-	"github.com/d-Rickyy-b/certstream-server-go/internal/models"
+	"github.com/letrics/certstream-server-go/internal/certificatetransparency"
+	"github.com/letrics/certstream-server-go/internal/config"
+	"github.com/letrics/certstream-server-go/internal/models"
 )
 
 // CertStream is a library interface for consuming CT logs directly

@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/d-Rickyy-b/certstream-server-go/internal/models"
+	"github.com/letrics/certstream-server-go/internal/models"
 
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/certificate-transparency-go/x509"

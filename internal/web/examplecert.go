@@ -3,7 +3,7 @@ package web
 import (
 	"net/http"
 
-	"github.com/d-Rickyy-b/certstream-server-go/internal/models"
+	"github.com/letrics/certstream-server-go/internal/models"
 )
 
 var exampleCert models.Entry

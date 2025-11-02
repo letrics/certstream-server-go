@@ -13,9 +13,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/d-Rickyy-b/certstream-server-go/internal/config"
-	"github.com/d-Rickyy-b/certstream-server-go/internal/models"
-	"github.com/d-Rickyy-b/certstream-server-go/internal/web"
+	"github.com/letrics/certstream-server-go/internal/config"
+	"github.com/letrics/certstream-server-go/internal/models"
+	"github.com/letrics/certstream-server-go/internal/web"
 
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/certificate-transparency-go/client"
@@ -27,7 +27,7 @@ import (
 var (
 	errCreatingClient    = errors.New("failed to create JSON client")
 	errFetchingSTHFailed = errors.New("failed to fetch STH")
-	userAgent            = fmt.Sprintf("Certstream Server v%s (github.com/d-Rickyy-b/certstream-server-go)", config.Version)
+	userAgent            = fmt.Sprintf("Certstream Server v%s (github.com/letrics/certstream-server-go)", config.Version)
 )
 
 // Watcher describes a component that watches for new certificates in a CT log.

@@ -1,10 +1,10 @@
-![certstream-server-go logo](https://github.com/d-Rickyy-b/certstream-server-go/blob/master/docs/img/certstream-server-go_logo.png?raw=true)
+![certstream-server-go logo](https://github.com/letrics/certstream-server-go/blob/master/docs/img/certstream-server-go_logo.png?raw=true)
 
 # Certstream Server Go
 
-[![build](https://github.com/d-Rickyy-b/certstream-server-go/actions/workflows/release_build.yml/badge.svg)](https://github.com/d-Rickyy-b/certstream-server-go/actions/workflows/release_build.yml)
+[![build](https://github.com/letrics/certstream-server-go/actions/workflows/release_build.yml/badge.svg)](https://github.com/letrics/certstream-server-go/actions/workflows/release_build.yml)
 [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/0rickyy0/certstream-server-go?label=docker&sort=semver)](https://hub.docker.com/repository/docker/0rickyy0/certstream-server-go)
-[![Go Reference](https://pkg.go.dev/badge/github.com/d-Rickyy-b/certstream-server-go.svg)](https://pkg.go.dev/github.com/d-Rickyy-b/certstream-server-go)
+[![Go Reference](https://pkg.go.dev/badge/github.com/letrics/certstream-server-go.svg)](https://pkg.go.dev/github.com/letrics/certstream-server-go)
 
 This project aims to be a drop-in replacement for the [certstream server](https://github.com/CaliDog/certstream-server/) by Calidog. This tool aggregates, parses, and streams certificate data from multiple [certificate transparency logs](https://www.certificate-transparency.org/what-is-ct) via websocket connections to the clients.
 
@@ -24,11 +24,11 @@ I quickly thought about running my own instance of certstream. But I didn't want
 
 ## Getting started
 
-Setting up an instance of the certstream server is straightforward. You can either download and compile the code yourself, or use one of the [precompiled binaries](https://github.com/d-Rickyy-b/certstream-server-go/releases).
+Setting up an instance of the certstream server is straightforward. You can either download and compile the code yourself, or use one of the [precompiled binaries](https://github.com/letrics/certstream-server-go/releases).
 
 By default, certstream-server-go will monitor all logs listed in the [Google Log list](https://www.gstatic.com/ct/log_list/v3/log_list.json), which are also included in the Chrome browser. There are more CT logs available than the ones listed there. Google provides [another list with all known CT logs](https://www.gstatic.com/ct/log_list/v3/all_logs_list.json). But not all of them might be relevant to you. Or maybe you are running your own CT log and want to monitor that as well?
 
-You can define additional logs in the config file. Check out the [sample config file](https://github.com/d-Rickyy-b/certstream-server-go/blob/master/config.sample.yaml)
+You can define additional logs in the config file. Check out the [sample config file](https://github.com/letrics/certstream-server-go/blob/master/config.sample.yaml)
 
 ### Docker
 
@@ -38,7 +38,7 @@ You can use it by running this command:
 `docker run -d -v /path/to/config.yaml:/app/config.yaml -p 8080:8080 0rickyy0/certstream-server-go`
 
 > [!WARNING]  
-> If you don't mount your own config file, the default config (config.sample.yaml) will be used. For more details, check out the [wiki](https://github.com/d-Rickyy-b/certstream-server-go/wiki/Configuration).
+> If you don't mount your own config file, the default config (config.sample.yaml) will be used. For more details, check out the [wiki](https://github.com/letrics/certstream-server-go/wiki/Configuration).
 
 ## Connecting
 
@@ -73,7 +73,7 @@ If you plan to connect clients to the server from outside your local network, ma
 ### Monitoring
 
 **certstream-server-go** also offers a Prometheus metrics endpoint at `/metrics`. You can use this to monitor the server with Prometheus and Grafana.
-For an in-depth guide on how to do this, please refer to the [wiki](https://github.com/d-Rickyy-b/certstream-server-go/wiki/Collecting-and-Visualizing-Metrics).
+For an in-depth guide on how to do this, please refer to the [wiki](https://github.com/letrics/certstream-server-go/wiki/Collecting-and-Visualizing-Metrics).
 
 ![grafana dashboard](https://user-images.githubusercontent.com/5798157/211434271-4350766d-2942-4fcb-8fda-f131f3f61cea.png)
 
