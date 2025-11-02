@@ -72,7 +72,6 @@ func (w *Watcher) Start() {
 	w.updateLogs()
 
 	log.Println("Started CT watcher")
-	go certHandler(w.certChan)
 	go w.watchNewLogs()
 
 	// Wait for all workers to finish
