@@ -382,8 +382,7 @@ func (w *worker) stop() {
 
 // runWorker runs a single worker for a single CT log. This method is blocking.
 func (w *worker) runWorker(ctx context.Context) error {
-	httpTimeout := time.Duration(config.AppConfig.General.CTLogFetcher.HTTPTimeout) * time.Second
-	hc := http.Client{Timeout: httpTimeout}
+	hc := http.Client{Timeout: 30 * time.Second}
 	jsonClient, e := client.New(w.ctURL, &hc, jsonclient.Options{UserAgent: userAgent})
 	if e != nil {
 		log.Printf("Error creating JSON client: %s\n", e)
@@ -405,14 +404,14 @@ func (w *worker) runWorker(ctx context.Context) error {
 
 	certScanner := scanner.NewScanner(jsonClient, scanner.ScannerOptions{
 		FetcherOptions: scanner.FetcherOptions{
-			BatchSize:     config.AppConfig.General.CTLogFetcher.BatchSize,
-			ParallelFetch: config.AppConfig.General.CTLogFetcher.ParallelFetch,
+			BatchSize:     100,
+			ParallelFetch: 1,
 			StartIndex:    int64(w.ctIndex),
 			Continuous:    true,
 		},
 		Matcher:     scanner.MatchAll{},
 		PrecertOnly: false,
-		NumWorkers:  config.AppConfig.General.CTLogFetcher.NumWorkers,
+		NumWorkers:  1,
 		BufferSize:  config.AppConfig.General.BufferSizes.CTLog,
 	})
 

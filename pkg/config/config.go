@@ -37,13 +37,6 @@ type BufferSizes struct {
 	BroadcastManager int `yaml:"broadcastmanager"`
 }
 
-type CTLogFetcher struct {
-	BatchSize     int `yaml:"batch_size"`
-	ParallelFetch int `yaml:"parallel_fetch"`
-	NumWorkers    int `yaml:"num_workers"`
-	HTTPTimeout   int `yaml:"http_timeout"` // in seconds
-}
-
 type Config struct {
 	Webserver struct {
 		ServerConfig       `yaml:",inline"`
@@ -62,10 +55,9 @@ type Config struct {
 		// DisableDefaultLogs indicates whether the default logs used in Google Chrome and provided by Google should be disabled.
 		DisableDefaultLogs bool `yaml:"disable_default_logs"`
 		// AdditionalLogs contains additional logs provided by the user that can be used in addition to the default logs.
-		AdditionalLogs []LogConfig  `yaml:"additional_logs"`
-		BufferSizes    BufferSizes  `yaml:"buffer_sizes"`
-		CTLogFetcher   CTLogFetcher `yaml:"ctlog_fetcher"`
-		DropOldLogs    *bool        `yaml:"drop_old_logs"`
+		AdditionalLogs []LogConfig `yaml:"additional_logs"`
+		BufferSizes    BufferSizes `yaml:"buffer_sizes"`
+		DropOldLogs    *bool       `yaml:"drop_old_logs"`
 		Recovery       struct {
 			Enabled     bool   `yaml:"enabled"`
 			CTIndexFile string `yaml:"ct_index_file"`
@@ -245,23 +237,6 @@ func validateConfig(config *Config) bool {
 
 	if config.General.BufferSizes.BroadcastManager <= 0 {
 		config.General.BufferSizes.BroadcastManager = 10000
-	}
-
-	// Set defaults for CT Log Fetcher options
-	if config.General.CTLogFetcher.BatchSize <= 0 {
-		config.General.CTLogFetcher.BatchSize = 100
-	}
-
-	if config.General.CTLogFetcher.ParallelFetch <= 0 {
-		config.General.CTLogFetcher.ParallelFetch = 1
-	}
-
-	if config.General.CTLogFetcher.NumWorkers <= 0 {
-		config.General.CTLogFetcher.NumWorkers = 1
-	}
-
-	if config.General.CTLogFetcher.HTTPTimeout <= 0 {
-		config.General.CTLogFetcher.HTTPTimeout = 30
 	}
 
 	// If the cleanup flag is not set, default to true
