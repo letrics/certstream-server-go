@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/letrics/certstream-server-go/pkg/config"
+	"github.com/letrics/certstream-server-go/pkg/models"
 	"io"
 	"log"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/letrics/certstream-server-go/internal/models"
 	"github.com/letrics/certstream-server-go/internal/web"
 
 	ct "github.com/google/certificate-transparency-go"

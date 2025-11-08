@@ -8,13 +8,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/letrics/certstream-server-go/pkg/models"
 	"hash"
 	"log"
 	"math/big"
 	"strings"
 	"time"
-
-	"github.com/letrics/certstream-server-go/internal/models"
 
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/certificate-transparency-go/x509"

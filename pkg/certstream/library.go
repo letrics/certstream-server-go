@@ -5,13 +5,13 @@ package certstream
 
 import (
 	"github.com/letrics/certstream-server-go/pkg/config"
+	"github.com/letrics/certstream-server-go/pkg/models"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/letrics/certstream-server-go/internal/certificatetransparency"
-	"github.com/letrics/certstream-server-go/internal/models"
 )
 
 // CertStream is a library interface for consuming CT logs directly

@@ -1,10 +1,9 @@
 package web
 
 import (
+	"github.com/letrics/certstream-server-go/pkg/models"
 	"log"
 	"sync"
-
-	"github.com/letrics/certstream-server-go/internal/models"
 )
 
 type BroadcastManager struct {

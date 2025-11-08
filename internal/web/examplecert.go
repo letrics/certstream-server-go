@@ -1,9 +1,8 @@
 package web
 
 import (
+	"github.com/letrics/certstream-server-go/pkg/models"
 	"net/http"
-
-	"github.com/letrics/certstream-server-go/internal/models"
 )
 
 var exampleCert models.Entry
