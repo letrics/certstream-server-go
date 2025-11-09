@@ -15,8 +15,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/letrics/certstream-server-go/internal/web"
-
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/certificate-transparency-go/client"
 	"github.com/google/certificate-transparency-go/jsonclient"
@@ -464,12 +462,6 @@ func certHandler(input <-chan models.Entry, output chan<- models.Entry) {
 
 	for entry := range input {
 		processed++
-
-		if processed%1000 == 0 {
-			log.Printf("Processed %d entries | Queue length: %d\n", processed, len(input))
-			// Every thousandth entry, we store one certificate as example
-			web.SetExampleCert(entry)
-		}
 
 		output <- entry
 
