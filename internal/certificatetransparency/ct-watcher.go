@@ -37,6 +37,7 @@ type Watcher struct {
 	wg         sync.WaitGroup
 	context    context.Context
 	certChan   chan models.Entry
+	workerChan chan models.Entry
 	cancelFunc context.CancelFunc
 }
 
@@ -51,9 +52,9 @@ func NewWatcher(certChan chan models.Entry) *Watcher {
 func (w *Watcher) Start() {
 	w.context, w.cancelFunc = context.WithCancel(context.Background())
 
-	// Create new certChan if it doesn't exist yet
-	if w.certChan == nil {
-		w.certChan = make(chan models.Entry, 5000)
+	// Internal channel used by workers; decouples worker production from external consumption/broadcast
+	if w.workerChan == nil {
+		w.workerChan = make(chan models.Entry, 5000)
 	}
 
 	if config.AppConfig.General.Recovery.Enabled {
@@ -73,9 +74,11 @@ func (w *Watcher) Start() {
 
 	log.Println("Started CT watcher")
 	go w.watchNewLogs()
+	go certHandler(w.workerChan, w.certChan)
 
 	// Wait for all workers to finish
 	w.wg.Wait()
+	close(w.workerChan)
 	close(w.certChan)
 }
 
@@ -157,7 +160,7 @@ func (w *Watcher) addNewlyAvailableLogs(logList loglist3.LogList) {
 				name:         transparencyLog.Description,
 				operatorName: operator.Name,
 				ctURL:        transparencyLog.URL,
-				entryChan:    w.certChan,
+				entryChan:    w.workerChan,
 				ctIndex:      lastCTIndex,
 			}
 			w.workers = append(w.workers, &ctWorker)
@@ -456,11 +459,10 @@ func (w *worker) foundPrecertCallback(rawEntry *ct.RawLogEntry) {
 
 // certHandler takes the entries out of the entryChan channel and broadcasts them to all clients.
 // Only a single instance of the certHandler runs per certstream server.
-func certHandler(entryChan chan models.Entry) {
+func certHandler(input <-chan models.Entry, output chan<- models.Entry) {
 	var processed int64
 
-	for {
-		entry := <-entryChan
+	for entry := range input {
 		processed++
 
 		if processed%1000 == 0 {
@@ -469,8 +471,7 @@ func certHandler(entryChan chan models.Entry) {
 			web.SetExampleCert(entry)
 		}
 
-		// Run json encoding in the background and send the result to the clients.
-		web.ClientHandler.Broadcast <- entry
+		output <- entry
 
 		// Update metrics
 		url := entry.Data.Source.NormalizedURL
