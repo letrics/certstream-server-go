@@ -42,6 +42,15 @@ general:
     # Combined buffer for the broadcast manager
     broadcastmanager: 10000
 
+  # Scanner options control how the CT log scanner fetches and processes certificates
+  scanner_options:
+    # Number of entries to fetch in each batch from the CT log
+    batch_size: 100
+    # Number of parallel fetch operations per CT log
+    parallel_fetch: 1
+    # Number of worker goroutines per CT log for processing certificates
+    num_workers: 1
+
   # Google regularly updates the log list. If this option is set to true, the server will remove all logs no longer listed in the Google log list.
   # This option defaults to true. See https://github.com/letrics/certstream-server-go/issues/51
   drop_old_logs: true
