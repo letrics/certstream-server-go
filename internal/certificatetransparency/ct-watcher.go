@@ -466,7 +466,7 @@ func certHandler(input <-chan models.Entry, output chan<- models.Entry) {
 		processed++
 
 		if processed%1000 == 0 {
-			log.Printf("Processed %d entries | Queue length: %d\n", processed, len(entryChan))
+			log.Printf("Processed %d entries | Queue length: %d\n", processed, len(input))
 			// Every thousandth entry, we store one certificate as example
 			web.SetExampleCert(entry)
 		}
